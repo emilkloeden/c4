@@ -40,6 +40,7 @@ function dropCoin(colIndex) {
             board[rowIndex][colIndex] = turnCount++ % 2;
             reDrawBoard();
             winState = checkForWin(rowIndex, colIndex);
+            toggleCurrentColor();
         } catch (e) {
             console.warn(e)
         }
@@ -265,13 +266,17 @@ function makeDropCoin(colIndex) {
                 board[rowIndex][colIndex] = turnCount++ % 2;
                 reDrawBoard();
                 winState = checkForWin(rowIndex, colIndex);
-                root.style.setProperty('--current-color',
-                    turnCount % 2 == 0 ? 'var(--first-color)' : 'var(--second-color)')
+                toggleCurrentColor();
             } catch (e) {
                 console.warn(e)
             }
         }
     }
+}
+
+function toggleCurrentColor() {
+    root.style.setProperty('--current-color',
+        turnCount % 2 == 0 ? 'var(--first-color)' : 'var(--second-color)');
 }
 
 /**
@@ -320,7 +325,7 @@ function handleKeys(e) {
             break;
         case '7':
             dropCoin(6);
-            break; 1
+            break;
 
         default:
             break;
