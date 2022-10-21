@@ -1,8 +1,12 @@
+let globalRoomId;
+let playerId;
 let turnCount = 0;
 const numRows = 6;
 const numColumns = 7;
 const winLength = 4;
 let winState = false;
+let waitingForConnection = false;
+
 let root = document.documentElement;
 
 let board = resetBoard()
@@ -23,6 +27,10 @@ function resetBoard() {
     return b;
 }
 
+function requestReset() {
+    socket.emit('reset', globalRoomId)
+    setStatus("Requesting a reset...")
+}
 /**
  * dropCoin(colIndex) places a coin at the next available row
  * in the column specified by 'colIndex', calls 'reDrawBoard'
@@ -33,22 +41,85 @@ function resetBoard() {
  */
 function dropCoin(colIndex) {
     if (winState) {
-        reset()
-    } else {
-        try {
-            const rowIndex = getNextCell(colIndex);
-            board[rowIndex][colIndex] = turnCount++ % 2;
-            reDrawBoard();
-            winState = checkForWin(rowIndex, colIndex);
-            toggleCurrentColor();
-        } catch (e) {
-            console.warn(e)
-        }
+        requestReset()
+    }
+    else {
+        play(colIndex)
     }
 }
 
+// Socket.io event handlers
+socket.on('joined room', ({ roomId, player, board: gameBoard, turn }) => {
+    playerId = player
+    globalRoomId = roomId
+    board = gameBoard
+    waitingForConnection = false
+    setHoverColor(player)
+    const message = `Joined room ${roomId} as Player ${player + 1}`
+    setStatus(message)
+    document.getElementById('room').innerText = roomId
+    document.getElementById('player').innerText = player + 1
+    document.getElementById('turn').innerText = turn === player ? "Your turn." : "Their turn."
+    console.log(message)
+})
 
+socket.on("player disconnected", () => {
+    const message = "Other player left. Waiting for new opponent."
+    waitingForConnection = true
+    document.getElementById("status").innerText = message
+    document.getElementById("turn").innerText = "Waiting for new opponent..."
+    console.log(message)
+})
 
+socket.on('player connected', ({ player, roomId }) => {
+    const message = `Player ${player + 1} joined room ${roomId}.`
+    waitingForConnection = false
+    setStatus(message)
+    console.log(message)
+})
+
+socket.on('not your turn', () => {
+    setStatus("Please wait for your opponent to take their turn.")
+})
+
+socket.on("placement received", ({ rowIndex, colIndex, player }) => {
+    updateBoardOnMessage(rowIndex, colIndex, player)
+    reDrawBoard()
+    document.getElementById('turn').innerText = "Their turn."
+    setStatus(`You played in column ${colIndex + 1}.`)
+})
+
+socket.on('other user played', ({ rowIndex, colIndex, player }) => {
+    updateBoardOnMessage(rowIndex, colIndex, player)
+    reDrawBoard()
+    document.getElementById('turn').innerText = "Your turn."
+    setStatus(`They played in column ${colIndex + 1}.`)
+})
+
+socket.on('victory', ({ player, winningSlice }) => {
+    setStatus(`Player ${player + 1} wins!`)
+    drawWin(winningSlice)
+    winState = true;
+})
+
+socket.on("game reset", (newBoard) => {
+    board = newBoard;
+    reset()
+})
+
+function setStatus(message) {
+    document.getElementById('status').innerText = message
+}
+
+function updateBoardOnMessage(rowIndex, colIndex, player) {
+    if (player === 0 || player === 1) {
+        board[rowIndex][colIndex] = player
+    }
+}
+
+function setHoverColor(player) {
+    root.style.setProperty('--current-color', player === 0 ? 'var(--first-color)' : 'var(--second-color)')
+}
 /**
  * reDrawBoard() repaints the UI based on the current board state
  * by setting a 'data-color' attribute on each element 
@@ -114,7 +185,7 @@ function drawWin(winningSlice) {
  * @param {*} winningColor 
  */
 function colorBackgroundInWinningColor(winningColor) {
-    document.querySelectorAll('.game-row').forEach(row => row.setAttribute('data-bg-color', `${winningColor}`));
+    document.querySelectorAll('.game-row').forEach(row => row.setAttribute('data-bg-color', `${winningColor} `));
 }
 
 /**
@@ -246,10 +317,6 @@ function getColumn(colIndex) {
 }
 
 
-
-
-
-
 /**
  * makeDropCoin(colIndex), used to add desired event handler
  * to placement cells
@@ -259,19 +326,15 @@ function getColumn(colIndex) {
 function makeDropCoin(colIndex) {
     return function dropCoin() {
         if (winState) {
-            reset()
+            requestReset()
         } else {
-            try {
-                const rowIndex = getNextCell(colIndex);
-                board[rowIndex][colIndex] = turnCount++ % 2;
-                reDrawBoard();
-                winState = checkForWin(rowIndex, colIndex);
-                toggleCurrentColor();
-            } catch (e) {
-                console.warn(e)
-            }
+            play(colIndex)
         }
     }
+}
+
+function play(colIndex) {
+    socket.emit('played', { roomId: globalRoomId, player: playerId, colIndex })
 }
 
 function toggleCurrentColor() {
@@ -285,14 +348,17 @@ function toggleCurrentColor() {
  */
 function reset() {
     setTimeout(() => {
-        document.querySelectorAll('.game-row').forEach(row => row.removeAttribute('data-bg-color'))
-        document.querySelectorAll('.game-col').forEach(el => el.removeAttribute('data-color'))
-        board = resetBoard()
+        clearBoardUI();
         reDrawBoard()
         winState = false
-        turnCount = 0
-        root.style.setProperty('--current-color', 'var(--first-color)')
+        setStatus("The game has been reset.")
     }, 200)
+
+}
+
+function clearBoardUI() {
+    document.querySelectorAll('.game-row').forEach(row => row.removeAttribute('data-bg-color'));
+    document.querySelectorAll('.game-col').forEach(el => el.removeAttribute('data-color'));
 }
 
 /**
@@ -303,7 +369,7 @@ function reset() {
 function handleKeys(e) {
     switch (e.key) {
         case 'Escape':
-            reset();
+            requestReset();
             break;
         case '1':
             dropCoin(0);
@@ -337,7 +403,7 @@ function addEventListeners() {
     placements.forEach((placement, i) => {
         placement.addEventListener('click', makeDropCoin(i));
     });
-    document.querySelector('#reset').addEventListener('click', reset)
+    document.querySelector('#reset').addEventListener('click', requestReset)
     window.addEventListener('keyup', handleKeys)
 }
 

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>C4</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="index.js"></script>
+  </head>
+
+  <body>
+    <div id="app">
+      <main>
+        <div id="game-grid">
+          <div id="placement-row">
+            <div class="placement-col">1</div>
+            <div class="placement-col">2</div>
+            <div class="placement-col">3</div>
+            <div class="placement-col">4</div>
+            <div class="placement-col">5</div>
+            <div class="placement-col">6</div>
+            <div class="placement-col">7</div>
+          </div>
+          <div class="game-row">
+            <!-- 35-41 -->
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+          <div class="game-row">
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+          <div class="game-row">
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+          <div class="game-row">
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+          <div class="game-row">
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+          <div class="game-row">
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+            <div class="game-col"></div>
+          </div>
+        </div>
+        <aside id="score-panel" class="hidden">
+          <div class="game-data-element">
+            <p>ROOM</hp>
+            <h1 id="room"></h1>
+          </div>
+          <div class="game-data-element">
+            <p>PLAYER</p>
+            <h1 id="player">Player 2</h1>
+          </div>
+          <div class="game-data-element">
+            <p>TURN</p>
+            <h1 id="turn">Theirs</h1>
+          </div>
+        </aside>
+      </main>
+      <footer id="data">
+        <div id="status" class="flex-fd col center"></div>
+        <div class="flex fd-col center">
+          <button id="reset">RESET (Esc)</button>
+        </div>
+      </footer>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+    </script>
+  </body>
+</html>
