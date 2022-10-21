@@ -15,7 +15,10 @@ const PORT = 3000;
 
 app.use(express.static(path.join(__dirname, "/public")))
 
-app.get('/', (_, res) => res.sendFile('index.html'))
+app.get('/', (_, res) => res.sendFile('multiplayer.html', { root: path.join(__dirname, "/public") }))
+app.get('/one-device', (_, res) => res.sendFile('one-device.html', { root: path.join(__dirname, "/public") }))
+app.get('/single-player', (_, res) => res.sendFile('single-player.html', { root: path.join(__dirname, "/public") }))
+// app.get('/single-player', (_, res) => res.sendFile('single-player.html'))
 
 let rooms = new Map()
 
