@@ -4,7 +4,7 @@
         <title>C4</title>
         <meta charset="UTF-8" />
         <link rel="stylesheet" href="style.css" />
-        <script defer src="multiplayer.js"></script>
+        <script defer src="offline.js"></script>
     </head>
 
     <body>
@@ -78,16 +78,8 @@
                 </div>
                 <aside id="score-panel">
                     <div class="game-data-element">
-                        <p>ROOM</p>
-                        <h1 id="room"></h1>
-                    </div>
-                    <div class="game-data-element">
-                        <p>PLAYER</p>
-                        <h1 id="player">Player 2</h1>
-                    </div>
-                    <div class="game-data-element">
                         <p>TURN</p>
-                        <h1 id="turn">Theirs</h1>
+                        <h1 id="turn">Player 1</h1>
                     </div>
                 </aside>
             </main>
@@ -98,9 +90,5 @@
                 </div>
             </footer>
         </div>
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-            const socket = io();
-        </script>
     </body>
 </html>

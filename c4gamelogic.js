@@ -85,19 +85,24 @@ function checkForForwardDiagonalWin(rowIndex, colIndex, board) {
     const currentCellValue = board[rowIndex][colIndex];
     for (let i = 0; i < winLength; i++) {
         try {
-            const slice = [
-                { rowIndex: rowIndex + 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex + 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex + 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex + 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex + 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex + 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex + 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex + 0 - i][colIndex + i - 0] },
-            ]
+            const slice = []
+
+            for (let j = 3; j >= 0; j--) {
+                const sliceRowIndex = rowIndex + j - i
+                const sliceColIndex = colIndex - j + i
+                slice.push({
+                    rowIndex: sliceRowIndex,
+                    columnIndex: sliceColIndex,
+                    columnValue: board[sliceRowIndex][sliceColIndex]
+                })
+            }
+
             if (slice.every(cell => cell.columnValue === currentCellValue)) {
                 return slice;
             }
         } catch (e) {
             // This is going to be reached.. a lot.
         }
-
     }
 }
 
@@ -105,19 +110,24 @@ function checkForBackwardDiagonalWin(rowIndex, colIndex, board) {
     const currentCellValue = board[rowIndex][colIndex];
     for (let i = 0; i < winLength; i++) {
         try {
-            const slice = [
-                { rowIndex: rowIndex - 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex - 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex - 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex - 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex - 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex - 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex - 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex - 0 - i][colIndex + i - 0] },
-            ]
+            const slice = []
+
+            for (let j = 3; j >= 0; j--) {
+                const sliceRowIndex = rowIndex - j + i
+                const sliceColIndex = colIndex - j + i
+                slice.push({
+                    rowIndex: sliceRowIndex,
+                    columnIndex: sliceColIndex,
+                    columnValue: board[sliceRowIndex][sliceColIndex]
+                })
+            }
+
             if (slice.every(cell => cell.columnValue === currentCellValue)) {
                 return slice;
             }
         } catch (e) {
             // This is going to be reached.. a lot.
         }
-
     }
 }
 

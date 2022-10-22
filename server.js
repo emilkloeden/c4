@@ -7,18 +7,16 @@ const { resetBoard,
     getNextCell,
     updateBoard,
     checkForWinState } = require('./c4gamelogic.js')
+
 const app = express()
 const server = http.createServer(app)
 const io = new Server(server);
-// app.http().io()
 const PORT = 3000;
 
 app.use(express.static(path.join(__dirname, "/public")))
 
 app.get('/', (_, res) => res.sendFile('multiplayer.html', { root: path.join(__dirname, "/public") }))
-app.get('/one-device', (_, res) => res.sendFile('one-device.html', { root: path.join(__dirname, "/public") }))
-app.get('/single-player', (_, res) => res.sendFile('single-player.html', { root: path.join(__dirname, "/public") }))
-// app.get('/single-player', (_, res) => res.sendFile('single-player.html'))
+app.get('/offline', (_, res) => res.sendFile('one-device.html', { root: path.join(__dirname, "/public") }))
 
 let rooms = new Map()
 
@@ -137,31 +135,7 @@ function chooseRoom(socket) {
     return roomId
 }
 
-// deprecated
-function chooseRoomOriginal(socket) {
-    let i = 1
-    while (i < 10) {
-        if (!rooms.has(i)) {
-            // First player joins a room, create the map
-            const room = new Map()
-            room.set('players', [socket.id])
-            room.set('board', resetBoard())
-            room.set('turn', 0)
-            room.set('state', false)
-            rooms.set(i, room)
-            return { roomId: i, player: 0 };
-        } else {
-            const room = rooms.get(i)
-            const players = room.get('players')
-            if (players.length === 1) {
-                players.push(socket.id)
-                return { roomId: i, player: 1 };
-            }
-        }
-        i++
-    }
-    return { roomId: -1, player: -1 };
-}
+
 
 function isPlayersTurn(roomId, player) {
     const room = rooms.get(roomId)

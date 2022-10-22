@@ -185,6 +185,7 @@ function drawWin(winningSlice) {
  * @param {*} winningColor 
  */
 function colorBackgroundInWinningColor(winningColor) {
+    console.log(`winningColor: ${winningColor}`)
     document.querySelectorAll('.game-row').forEach(row => row.setAttribute('data-bg-color', `${winningColor} `));
 }
 
@@ -206,115 +207,115 @@ function drawWinningSlice(winningSlice) {
     });
 }
 
-function checkForHorizontalWin(rowIndex, colIndex) {
-    const row = board[rowIndex];
-    const currentCellValue = board[rowIndex][colIndex]
-    const slices = getRowSlices(row, rowIndex, colIndex);
-    const winningSlice = slices.find(slice => slice.every(cell => cell.columnValue === currentCellValue))
-    return winningSlice;
-}
+// function checkForHorizontalWin(rowIndex, colIndex) {
+//     const row = board[rowIndex];
+//     const currentCellValue = board[rowIndex][colIndex]
+//     const slices = getRowSlices(row, rowIndex, colIndex);
+//     const winningSlice = slices.find(slice => slice.every(cell => cell.columnValue === currentCellValue))
+//     return winningSlice;
+// }
 
-function getRowSlices(row, rowIndex, colIndex) {
-    const slices = [];
-    for (let i = winLength - 1; i >= 0; i--) {
-        if (colIndex - i >= 0 && colIndex - i + winLength <= numColumns) {
-            let slice = row.slice(colIndex - i, colIndex - i + winLength);
-            slices.push(slice.map((columnValue, sliceIndex) => { return { rowIndex, columnIndex: colIndex - i + sliceIndex, columnValue } }))
-        }
-    }
+// function getRowSlices(row, rowIndex, colIndex) {
+//     const slices = [];
+//     for (let i = winLength - 1; i >= 0; i--) {
+//         if (colIndex - i >= 0 && colIndex - i + winLength <= numColumns) {
+//             let slice = row.slice(colIndex - i, colIndex - i + winLength);
+//             slices.push(slice.map((columnValue, sliceIndex) => { return { rowIndex, columnIndex: colIndex - i + sliceIndex, columnValue } }))
+//         }
+//     }
 
-    return slices;
-}
+//     return slices;
+// }
 
-function checkForVerticalWin(rowIndex, colIndex) {
-    const currentCellValue = board[rowIndex][colIndex]
-    const column = getColumn(colIndex)
-    const slices = getColumnSlices(column, rowIndex, colIndex);
-    const winningSlice = slices.find(slice => slice.every(cell => cell.columnValue === currentCellValue))
-    return winningSlice;
-}
+// function checkForVerticalWin(rowIndex, colIndex) {
+//     const currentCellValue = board[rowIndex][colIndex]
+//     const column = getColumn(colIndex)
+//     const slices = getColumnSlices(column, rowIndex, colIndex);
+//     const winningSlice = slices.find(slice => slice.every(cell => cell.columnValue === currentCellValue))
+//     return winningSlice;
+// }
 
-function getColumnSlices(column, rowIndex, colIndex) {
-    const slices = [];
-    for (let i = winLength - 1; i >= 0; i--) {
-        if (rowIndex - i >= 0 && rowIndex - i + winLength <= numRows) {
-            let slice = column.slice(rowIndex - i, rowIndex - i + winLength);
-            slices.push(slice.map((columnValue, sliceIndex) => { return { rowIndex: rowIndex - i + sliceIndex, columnIndex: colIndex, columnValue } }))
-        }
-    }
+// function getColumnSlices(column, rowIndex, colIndex) {
+//     const slices = [];
+//     for (let i = winLength - 1; i >= 0; i--) {
+//         if (rowIndex - i >= 0 && rowIndex - i + winLength <= numRows) {
+//             let slice = column.slice(rowIndex - i, rowIndex - i + winLength);
+//             slices.push(slice.map((columnValue, sliceIndex) => { return { rowIndex: rowIndex - i + sliceIndex, columnIndex: colIndex, columnValue } }))
+//         }
+//     }
 
-    return slices;
-}
+//     return slices;
+// }
 
-function checkForForwardDiagonalWin(rowIndex, colIndex) {
-    const currentCellValue = board[rowIndex][colIndex];
-    for (let i = 0; i < winLength; i++) {
-        try {
-            const slice = [
-                { rowIndex: rowIndex + 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex + 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex + 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex + 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex + 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex + 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex + 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex + 0 - i][colIndex + i - 0] },
-            ]
-            if (slice.every(cell => cell.columnValue === currentCellValue)) {
-                return slice;
-            }
-        } catch (e) {
-            // This is going to be reached.. a lot.
-        }
+// function checkForForwardDiagonalWin(rowIndex, colIndex) {
+//     const currentCellValue = board[rowIndex][colIndex];
+//     for (let i = 0; i < winLength; i++) {
+//         try {
+//             const slice = [
+//                 { rowIndex: rowIndex + 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex + 3 - i][colIndex + i - 3] },
+//                 { rowIndex: rowIndex + 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex + 2 - i][colIndex + i - 2] },
+//                 { rowIndex: rowIndex + 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex + 1 - i][colIndex + i - 1] },
+//                 { rowIndex: rowIndex + 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex + 0 - i][colIndex + i - 0] },
+//             ]
+//             if (slice.every(cell => cell.columnValue === currentCellValue)) {
+//                 return slice;
+//             }
+//         } catch (e) {
+//             // This is going to be reached.. a lot.
+//         }
 
-    }
-}
+//     }
+// }
 
-function checkForBackwardDiagonalWin(rowIndex, colIndex) {
-    const currentCellValue = board[rowIndex][colIndex];
-    for (let i = 0; i < winLength; i++) {
-        try {
-            const slice = [
-                { rowIndex: rowIndex - 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex - 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex - 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex - 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex - 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex - 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex - 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex - 0 - i][colIndex + i - 0] },
-            ]
-            if (slice.every(cell => cell.columnValue === currentCellValue)) {
-                return slice;
-            }
-        } catch (e) {
-            // This is going to be reached.. a lot.
-        }
+// function checkForBackwardDiagonalWin(rowIndex, colIndex) {
+//     const currentCellValue = board[rowIndex][colIndex];
+//     for (let i = 0; i < winLength; i++) {
+//         try {
+//             const slice = [
+//                 { rowIndex: rowIndex - 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex - 3 - i][colIndex + i - 3] },
+//                 { rowIndex: rowIndex - 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex - 2 - i][colIndex + i - 2] },
+//                 { rowIndex: rowIndex - 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex - 1 - i][colIndex + i - 1] },
+//                 { rowIndex: rowIndex - 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex - 0 - i][colIndex + i - 0] },
+//             ]
+//             if (slice.every(cell => cell.columnValue === currentCellValue)) {
+//                 return slice;
+//             }
+//         } catch (e) {
+//             // This is going to be reached.. a lot.
+//         }
 
-    }
-}
+//     }
+// }
 
-/**
- * getNextCell(colIndex) returns the rowIndex of the 
- * next available row in column specifed by 'colIndex'
- * or throws an Error if column is full
- * @param {*} colIndex 
- * @returns int
- */
-function getNextCell(colIndex) {
-    const column = getColumn(colIndex)
-    let lastPlacedRowIndex = column.findIndex(row => row === 0 || row === 1)
-    if (lastPlacedRowIndex === 0) {
-        throw new Error('Column is full.')
-    }
-    else if (lastPlacedRowIndex === -1) {
-        lastPlacedRowIndex = numRows;
-    }
-    return lastPlacedRowIndex - 1
+// /**
+//  * getNextCell(colIndex) returns the rowIndex of the 
+//  * next available row in column specifed by 'colIndex'
+//  * or throws an Error if column is full
+//  * @param {*} colIndex 
+//  * @returns int
+//  */
+// function getNextCell(colIndex) {
+//     const column = getColumn(colIndex)
+//     let lastPlacedRowIndex = column.findIndex(row => row === 0 || row === 1)
+//     if (lastPlacedRowIndex === 0) {
+//         throw new Error('Column is full.')
+//     }
+//     else if (lastPlacedRowIndex === -1) {
+//         lastPlacedRowIndex = numRows;
+//     }
+//     return lastPlacedRowIndex - 1
 
-}
+// }
 
-/**
- * getColumn(colIndex) returns an Array comprising the values
- * of the board at colIndex 
- * @param {Array<CellValue>} colIndex 
- * @returns 
- */
-function getColumn(colIndex) {
-    return board.flatMap(row => row[colIndex]);
-}
+// /**
+//  * getColumn(colIndex) returns an Array comprising the values
+//  * of the board at colIndex 
+//  * @param {Array<CellValue>} colIndex 
+//  * @returns 
+//  */
+// function getColumn(colIndex) {
+//     return board.flatMap(row => row[colIndex]);
+// }
 
 
 /**

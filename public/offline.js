@@ -1,12 +1,8 @@
-let globalRoomId;
-let playerId;
 let turnCount = 0;
 const numRows = 6;
 const numColumns = 7;
 const winLength = 4;
 let winState = false;
-let waitingForConnection = false;
-
 let root = document.documentElement;
 
 let board = resetBoard()
@@ -27,10 +23,6 @@ function resetBoard() {
     return b;
 }
 
-function requestReset() {
-    socket.emit('reset', globalRoomId)
-    setStatus("Requesting a reset...")
-}
 /**
  * dropCoin(colIndex) places a coin at the next available row
  * in the column specified by 'colIndex', calls 'reDrawBoard'
@@ -41,85 +33,25 @@ function requestReset() {
  */
 function dropCoin(colIndex) {
     if (winState) {
-        requestReset()
-    }
-    else {
-        play(colIndex)
-    }
-}
+        reset()
+    } else {
+        try {
+            const rowIndex = getNextCell(colIndex);
+            board[rowIndex][colIndex] = turnCount++ % 2;
+            document.getElementById('turn').innerText = `Player ${(turnCount % 2) + 1}`
+            reDrawBoard();
+            winState = checkForWin(rowIndex, colIndex);
+            document.getElementById('turn').innerText = winState ? "GAME OVER" : `Player ${(turnCount % 2) + 1}`
 
-// Socket.io event handlers
-socket.on('joined room', ({ roomId, player, board: gameBoard, turn }) => {
-    playerId = player
-    globalRoomId = roomId
-    board = gameBoard
-    waitingForConnection = false
-    setHoverColor(player)
-    const message = `Joined room ${roomId} as Player ${player + 1}`
-    setStatus(message)
-    document.getElementById('room').innerText = roomId
-    document.getElementById('player').innerText = player + 1
-    document.getElementById('turn').innerText = turn === player ? "Your turn." : "Their turn."
-    console.log(message)
-})
-
-socket.on("player disconnected", () => {
-    const message = "Other player left. Waiting for new opponent."
-    waitingForConnection = true
-    document.getElementById("status").innerText = message
-    document.getElementById("turn").innerText = "Waiting for new opponent..."
-    console.log(message)
-})
-
-socket.on('player connected', ({ player, roomId }) => {
-    const message = `Player ${player + 1} joined room ${roomId}.`
-    waitingForConnection = false
-    setStatus(message)
-    console.log(message)
-})
-
-socket.on('not your turn', () => {
-    setStatus("Please wait for your opponent to take their turn.")
-})
-
-socket.on("placement received", ({ rowIndex, colIndex, player }) => {
-    updateBoardOnMessage(rowIndex, colIndex, player)
-    reDrawBoard()
-    document.getElementById('turn').innerText = "Their turn."
-    setStatus(`You played in column ${colIndex + 1}.`)
-})
-
-socket.on('other user played', ({ rowIndex, colIndex, player }) => {
-    updateBoardOnMessage(rowIndex, colIndex, player)
-    reDrawBoard()
-    document.getElementById('turn').innerText = "Your turn."
-    setStatus(`They played in column ${colIndex + 1}.`)
-})
-
-socket.on('victory', ({ player, winningSlice }) => {
-    setStatus(`Player ${player + 1} wins!`)
-    drawWin(winningSlice)
-    winState = true;
-})
-
-socket.on("game reset", (newBoard) => {
-    board = newBoard;
-    reset()
-})
-
-function setStatus(message) {
-    document.getElementById('status').innerText = message
-}
-
-function updateBoardOnMessage(rowIndex, colIndex, player) {
-    if (player === 0 || player === 1) {
-        board[rowIndex][colIndex] = player
+            toggleCurrentColor();
+        } catch (e) {
+            console.warn(e)
+        }
     }
 }
 
-function setHoverColor(player) {
-    root.style.setProperty('--current-color', player === 0 ? 'var(--first-color)' : 'var(--second-color)')
-}
+
+
 /**
  * reDrawBoard() repaints the UI based on the current board state
  * by setting a 'data-color' attribute on each element 
@@ -185,7 +117,8 @@ function drawWin(winningSlice) {
  * @param {*} winningColor 
  */
 function colorBackgroundInWinningColor(winningColor) {
-    document.querySelectorAll('.game-row').forEach(row => row.setAttribute('data-bg-color', `${winningColor} `));
+    console.log(`winningColor: ${winningColor}`)
+    document.querySelectorAll('.game-row').forEach(row => row.setAttribute('data-bg-color', `${winningColor}`));
 }
 
 /**
@@ -250,19 +183,24 @@ function checkForForwardDiagonalWin(rowIndex, colIndex) {
     const currentCellValue = board[rowIndex][colIndex];
     for (let i = 0; i < winLength; i++) {
         try {
-            const slice = [
-                { rowIndex: rowIndex + 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex + 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex + 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex + 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex + 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex + 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex + 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex + 0 - i][colIndex + i - 0] },
-            ]
+            const slice = []
+
+            for (let j = 3; j >= 0; j--) {
+                const sliceRowIndex = rowIndex + j - i
+                const sliceColIndex = colIndex - j + i
+                slice.push({
+                    rowIndex: sliceRowIndex,
+                    columnIndex: sliceColIndex,
+                    columnValue: board[sliceRowIndex][sliceColIndex]
+                })
+            }
+
             if (slice.every(cell => cell.columnValue === currentCellValue)) {
                 return slice;
             }
         } catch (e) {
             // This is going to be reached.. a lot.
         }
-
     }
 }
 
@@ -270,19 +208,24 @@ function checkForBackwardDiagonalWin(rowIndex, colIndex) {
     const currentCellValue = board[rowIndex][colIndex];
     for (let i = 0; i < winLength; i++) {
         try {
-            const slice = [
-                { rowIndex: rowIndex - 3 - i, columnIndex: colIndex + i - 3, columnValue: board[rowIndex - 3 - i][colIndex + i - 3] },
-                { rowIndex: rowIndex - 2 - i, columnIndex: colIndex + i - 2, columnValue: board[rowIndex - 2 - i][colIndex + i - 2] },
-                { rowIndex: rowIndex - 1 - i, columnIndex: colIndex + i - 1, columnValue: board[rowIndex - 1 - i][colIndex + i - 1] },
-                { rowIndex: rowIndex - 0 - i, columnIndex: colIndex + i - 0, columnValue: board[rowIndex - 0 - i][colIndex + i - 0] },
-            ]
+            const slice = []
+
+            for (let j = 3; j >= 0; j--) {
+                const sliceRowIndex = rowIndex - j + i
+                const sliceColIndex = colIndex - j + i
+                slice.push({
+                    rowIndex: sliceRowIndex,
+                    columnIndex: sliceColIndex,
+                    columnValue: board[sliceRowIndex][sliceColIndex]
+                })
+            }
+
             if (slice.every(cell => cell.columnValue === currentCellValue)) {
                 return slice;
             }
         } catch (e) {
             // This is going to be reached.. a lot.
         }
-
     }
 }
 
@@ -317,6 +260,10 @@ function getColumn(colIndex) {
 }
 
 
+
+
+
+
 /**
  * makeDropCoin(colIndex), used to add desired event handler
  * to placement cells
@@ -326,15 +273,21 @@ function getColumn(colIndex) {
 function makeDropCoin(colIndex) {
     return function dropCoin() {
         if (winState) {
-            requestReset()
+            reset()
         } else {
-            play(colIndex)
+            try {
+                const rowIndex = getNextCell(colIndex);
+                board[rowIndex][colIndex] = turnCount++ % 2;
+
+                reDrawBoard();
+                winState = checkForWin(rowIndex, colIndex);
+                document.getElementById('turn').innerText = winState ? "GAME OVER" : `Player ${(turnCount % 2) + 1}`
+                toggleCurrentColor();
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
-}
-
-function play(colIndex) {
-    socket.emit('played', { roomId: globalRoomId, player: playerId, colIndex })
 }
 
 function toggleCurrentColor() {
@@ -348,17 +301,15 @@ function toggleCurrentColor() {
  */
 function reset() {
     setTimeout(() => {
-        clearBoardUI();
+        document.querySelectorAll('.game-row').forEach(row => row.removeAttribute('data-bg-color'))
+        document.querySelectorAll('.game-col').forEach(el => el.removeAttribute('data-color'))
+        board = resetBoard()
         reDrawBoard()
+        document.getElementById('turn').innerText = "Player 1"
         winState = false
-        setStatus("The game has been reset.")
+        turnCount = 0
+        root.style.setProperty('--current-color', 'var(--first-color)')
     }, 200)
-
-}
-
-function clearBoardUI() {
-    document.querySelectorAll('.game-row').forEach(row => row.removeAttribute('data-bg-color'));
-    document.querySelectorAll('.game-col').forEach(el => el.removeAttribute('data-color'));
 }
 
 /**
@@ -369,7 +320,7 @@ function clearBoardUI() {
 function handleKeys(e) {
     switch (e.key) {
         case 'Escape':
-            requestReset();
+            reset();
             break;
         case '1':
             dropCoin(0);
@@ -393,8 +344,6 @@ function handleKeys(e) {
             dropCoin(6);
             break;
 
-        default:
-            break;
     }
 }
 
@@ -403,7 +352,7 @@ function addEventListeners() {
     placements.forEach((placement, i) => {
         placement.addEventListener('click', makeDropCoin(i));
     });
-    document.querySelector('#reset').addEventListener('click', requestReset)
+    document.querySelector('#reset').addEventListener('click', reset)
     window.addEventListener('keyup', handleKeys)
 }
 
